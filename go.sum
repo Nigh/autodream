@@ -1,3 +1,5 @@
+github.com/jezek/xgb v1.3.1 h1:NQCAEfQyzN+3RjWUSHBuVIxQcy2YfG3/mNvKfs/0rEg=
+github.com/jezek/xgb v1.3.1/go.mod h1:nrhwO0FX/enq75I7Y7G8iN1ubpSGZEiA3v9e9GyRFlk=
 github.com/shinkar94/godesktopdup v0.1.1 h1:dWQ6AxVjZe905cjaxPRvNrjpYS4kxK7OIvzQXq4oOEc=
 github.com/shinkar94/godesktopdup v0.1.1/go.mod h1:uOdi0M4b2ntakO1T8aTm/T/fbIZRuu4NTKGWTjhKCrw=
 golang.org/x/sys v0.20.0 h1:Od9JTbYCk261bKm4M/mw7AklTlFYIa0bIp9BgSm1S8Y=
