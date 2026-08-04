@@ -6,6 +6,8 @@ Modular game/desktop **automation framework** in Go. Not a script for a single g
 
 Early development on branch [`dev`](https://github.com/Nigh/autodream/tree/dev). See [AGENTS.md](AGENTS.md) for architecture, test matrix, and phase progress.
 
+**Workflow authoring (best practices):** [docs/workflow.md](docs/workflow.md)
+
 ## Requirements
 
 - Go 1.24+
