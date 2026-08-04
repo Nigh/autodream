@@ -4,7 +4,10 @@ import "fmt"
 
 // ROI is a rectangle in pixel coordinates (origin top-left).
 type ROI struct {
-	X, Y, W, H int
+	X int `yaml:"x" json:"x"`
+	Y int `yaml:"y" json:"y"`
+	W int `yaml:"w" json:"w"`
+	H int `yaml:"h" json:"h"`
 }
 
 // View shares Frame.Data without copying the full image.

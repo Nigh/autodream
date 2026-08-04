@@ -1,0 +1,8 @@
+name: hp_bar_red
+roi: {x: 10, y: 10, w: 100, h: 20}
+b: 0
+g: 0
+r: 200
+threshold: 40
+world_key: hp_bar_present
+world_value: true
