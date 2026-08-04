@@ -51,7 +51,8 @@ Before writing nodes, list every key the pipeline will read. Treat this as an AP
 
 | Environment | Capture | Notes |
 |-------------|---------|--------|
-| Unit / CI (Linux) | `capture/fake` | Synthetic BGRA frames |
+| Unit / CI (headless) | `capture/fake` | Synthetic BGRA frames |
+| Linux desktop (X11/XWayland) | `capture/x11` | Root GetImage → BGRA; needs `$DISPLAY` |
 | Linux + remote DXGI service | `capture/dxgihttp` | PNG+HTTP; slower; fine for integration |
 | Windows production | `capture/dxgi` | Shared BGRA frames; default for real runs |
 
@@ -126,7 +127,8 @@ root := &pipeline.Selector{Children: []pipeline.Node{
 
 | Mode | Executor |
 |------|----------|
-| Tests / Linux | `executor/fake` — assert recorded actions |
+| Tests / headless | `executor/fake` — assert recorded actions |
+| Linux real input | `executor/mux` + `mouse` / `keyboard` (XTest; needs XTEST + `$DISPLAY`) |
 | Windows real input | `executor/mux` + `mouse` / `keyboard` (/ `gamepad` rumble) |
 
 **Practices**
@@ -134,7 +136,8 @@ root := &pipeline.Selector{Children: []pipeline.Node{
 - Develop with fake executor until the World+Pipeline story is correct.
 - Gate real input behind an explicit flag (see demo `-real-executor`).
 - Prefer `KindMouseClick` / `KindKeyTap` over raw down/up unless you need holds.
-- Validate coordinates against the capture surface (multi-monitor offsets are your problem until Capture exposes them).
+- Validate coordinates against the capture surface (X11 root / DXGI output; multi-monitor is MVP-limited).
+- Native Wayland (non-XWayland) capture/input is out of scope for the current MVP.
 
 ### 6. Run under Runtime
 
@@ -246,7 +249,12 @@ When implementing a workflow for a user:
 2. Add/configure Recognizers that only emit those keys.  
 3. Build Pipeline from Condition / Action / Wait / Sequence / Selector / Repeat.  
 4. Wire `runtime.Config` in a cmd/app; use fake Capture+Executor until green.  
-5. Enable real DXGI/input only on Windows with an explicit flag.  
+5. Enable real capture/input with an explicit flag: Windows `dxgi` / Linux `x11` + `-real-executor`.  
 6. Update this doc or `AGENTS.md` if you change contracts or add shared patterns.
 
-Canonical demo: `go run ./cmd/demo -capture=fake -duration=1s`
+Canonical demos:
+
+```bash
+go run ./cmd/demo -capture=fake -duration=1s   # headless / CI
+go run ./cmd/demo -capture=x11 -duration=1s    # Linux with DISPLAY
+```

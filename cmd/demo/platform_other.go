@@ -1,4 +1,4 @@
-//go:build !windows
+//go:build !windows && !linux
 
 package main
 
@@ -15,9 +15,13 @@ func openDXGICapture(int, autolog.Logger) (capture.Capture, error) {
 	return nil, fmt.Errorf("demo: dxgi capture requires Windows; use -capture=fake or -capture=dxgihttp")
 }
 
+func openX11Capture(int, autolog.Logger) (capture.Capture, error) {
+	return nil, fmt.Errorf("demo: x11 capture requires Linux; use -capture=fake or -capture=dxgihttp")
+}
+
 func openExecutor(real bool) (executor.Executor, error) {
 	if real {
-		return nil, fmt.Errorf("demo: -real-executor requires Windows")
+		return nil, fmt.Errorf("demo: -real-executor requires Windows or Linux")
 	}
 	return &exfake.Executor{}, nil
 }
