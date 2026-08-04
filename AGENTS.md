@@ -69,7 +69,7 @@ go test ./...
 - [x] Phase C — `Runtime.Run` + pipeline Sequence/Selector/Condition/Wait/Repeat/ActionNode
 - [x] Phase D — color / template / ocr (Engine inject) / llmvision (HTTP)
 - [x] Phase E — Windows mouse / keyboard / gamepad (rumble) + portable `executor/mux`
-- [ ] Phase F — cmd/demo
+- [x] Phase F — `cmd/demo` (Linux: fake/dxgihttp; Windows: dxgi + optional real executor)
 
 ## Phase notes
 
@@ -78,6 +78,7 @@ go test ./...
 - OCR: inject `ocr.Engine`; LLM vision: HTTP JSON; Template: SAD
 - Executors: `mouse`/`keyboard`/`gamepad` are `//go:build windows`; Linux uses `fake` + `mux`
 - Gamepad MVP: XInput rumble only (`control=vibrate`)
+- Demo: `go run ./cmd/demo -capture=fake -duration=1s`
 - Deps: `gopkg.in/yaml.v3`, `github.com/shinkar94/godesktopdup`, `golang.org/x/sys`
 
 ## Git workflow for agents
