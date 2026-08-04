@@ -67,7 +67,7 @@ go test ./...
 - [x] Phase A — interfaces + leaf types + fake trio
 - [x] Phase B — Frame pool + `capture/dxgihttp` + `capture/dxgi` (windows, godesktopdup)
 - [x] Phase C — `Runtime.Run` + pipeline Sequence/Selector/Condition/Wait/Repeat/ActionNode
-- [ ] Phase D — color / template / ocr / llmvision
+- [x] Phase D — color / template / ocr (Engine inject) / llmvision (HTTP)
 - [ ] Phase E — Windows mouse / keyboard / gamepad
 - [ ] Phase F — cmd/demo
 
@@ -76,7 +76,9 @@ go test ./...
 - `world.Update` is the mutation type; `recognition.Result` carries `[]world.Update`
 - Runtime tick: Capture → Recognizers → World.Apply → Root.Tick
 - Pipeline is composable nodes (BT-ready Status: Success/Failure/Running)
-- `dxgihttp` → Nigh/dxgi-capture; `dxgi` → godesktopdup (Windows only)
+- OCR: inject `ocr.Engine` (e.g. `StaticEngine` for tests); no tesseract CGO in MVP
+- LLM vision: POST `{prompt,image_base64_png}` → `{text}` or `{updates}`
+- Template: SAD score 0..1 over ROI (CPU; fine for small templates)
 - Deps: `gopkg.in/yaml.v3`, `github.com/shinkar94/godesktopdup`
 
 ## Git workflow for agents
