@@ -1,5 +1,5 @@
-//go:build !windows
+//go:build !windows && !linux
 
 package keyboard
 
-// Windows keyboard executor lives in keyboard_windows.go.
+// Native keyboard executors: Windows (user32) and Linux (XTest). See keyboard_*.go.

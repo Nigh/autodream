@@ -1,5 +1,5 @@
-//go:build !windows
+//go:build !windows && !linux
 
 package mouse
 
-// Windows mouse executor lives in mouse_windows.go.
+// Native mouse executors: Windows (user32) and Linux (XTest). See mouse_*.go.
