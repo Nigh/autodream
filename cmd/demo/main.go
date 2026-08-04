@@ -34,12 +34,12 @@ func main() {
 }
 
 func run() error {
-	captureKind := flag.String("capture", defaultCapture(), "fake | dxgihttp | dxgi")
+	captureKind := flag.String("capture", defaultCapture(), "fake | dxgihttp | dxgi | x11")
 	httpURL := flag.String("dxgihttp-url", "http://127.0.0.1:3000", "base URL for dxgihttp")
-	displayID := flag.Int("display", 0, "display id for dxgi/dxgihttp")
+	displayID := flag.Int("display", 0, "display/screen index for dxgi/dxgihttp/x11")
 	duration := flag.Duration("duration", 3*time.Second, "run duration (0 = until signal)")
 	tick := flag.Duration("tick", 50*time.Millisecond, "runtime tick interval")
-	useRealExec := flag.Bool("real-executor", false, "use OS input executors (Windows only)")
+	useRealExec := flag.Bool("real-executor", false, "use OS input executors (Windows user32 or Linux XTest)")
 	flag.Parse()
 
 	logger := autolog.NewSlog(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelInfo})))
@@ -104,10 +104,17 @@ func run() error {
 }
 
 func defaultCapture() string {
-	if runtime.GOOS == "windows" {
+	switch runtime.GOOS {
+	case "windows":
 		return "dxgi"
+	case "linux":
+		if os.Getenv("DISPLAY") != "" {
+			return "x11"
+		}
+		return "fake"
+	default:
+		return "fake"
 	}
-	return "fake"
 }
 
 func openCapture(kind, httpURL string, displayID int, logger autolog.Logger) (capture.Capture, error) {
@@ -123,6 +130,8 @@ func openCapture(kind, httpURL string, displayID int, logger autolog.Logger) (ca
 		})
 	case "dxgi":
 		return openDXGICapture(displayID, logger)
+	case "x11":
+		return openX11Capture(displayID, logger)
 	default:
 		return nil, fmt.Errorf("unknown capture %q", kind)
 	}

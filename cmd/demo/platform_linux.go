@@ -1,4 +1,4 @@
-//go:build windows
+//go:build linux
 
 package main
 
@@ -7,7 +7,7 @@ import (
 
 	"github.com/Nigh/autodream/automation/action"
 	"github.com/Nigh/autodream/automation/capture"
-	"github.com/Nigh/autodream/automation/capture/dxgi"
+	"github.com/Nigh/autodream/automation/capture/x11"
 	"github.com/Nigh/autodream/automation/executor"
 	exfake "github.com/Nigh/autodream/automation/executor/fake"
 	"github.com/Nigh/autodream/automation/executor/keyboard"
@@ -16,15 +16,12 @@ import (
 	autolog "github.com/Nigh/autodream/automation/log"
 )
 
-func openDXGICapture(displayID int, logger autolog.Logger) (capture.Capture, error) {
-	return dxgi.New(dxgi.Config{
-		OutputIndex: uint(displayID),
-		Logger:      logger,
-	})
+func openDXGICapture(int, autolog.Logger) (capture.Capture, error) {
+	return nil, fmt.Errorf("demo: dxgi capture requires Windows; use -capture=x11, fake, or dxgihttp")
 }
 
-func openX11Capture(int, autolog.Logger) (capture.Capture, error) {
-	return nil, fmt.Errorf("demo: x11 capture requires Linux; use -capture=dxgi, fake, or dxgihttp")
+func openX11Capture(screen int, logger autolog.Logger) (capture.Capture, error) {
+	return x11.New(x11.Config{Screen: screen, Logger: logger})
 }
 
 func openExecutor(real bool) (executor.Executor, error) {
