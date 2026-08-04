@@ -66,17 +66,18 @@ go test ./...
 - [x] Bootstrap — repo, `dev`, AGENTS.md, README
 - [x] Phase A — interfaces + leaf types + fake trio
 - [x] Phase B — Frame pool + `capture/dxgihttp` + `capture/dxgi` (windows, godesktopdup)
-- [ ] Phase C — Runtime.Run + pipeline nodes + fake integration test
+- [x] Phase C — `Runtime.Run` + pipeline Sequence/Selector/Condition/Wait/Repeat/ActionNode
 - [ ] Phase D — color / template / ocr / llmvision
 - [ ] Phase E — Windows mouse / keyboard / gamepad
 - [ ] Phase F — cmd/demo
 
-## Phase B notes
+## Phase notes
 
-- `frame.Pool` recycles BGRA buffers; captures release the previous current frame on refresh/stop
-- `dxgihttp` talks to Nigh/dxgi-capture (`/capture/full`, `/capture/region`); PNG→BGRA; Linux-tested via httptest
-- `capture/dxgi` uses `github.com/shinkar94/godesktopdup`; `GOOS=windows go build` verified from Linux
-- Dependency: `gopkg.in/yaml.v3`, `github.com/shinkar94/godesktopdup` (+ `golang.org/x/sys`)
+- `world.Update` is the mutation type; `recognition.Result` carries `[]world.Update`
+- Runtime tick: Capture → Recognizers → World.Apply → Root.Tick
+- Pipeline is composable nodes (BT-ready Status: Success/Failure/Running)
+- `dxgihttp` → Nigh/dxgi-capture; `dxgi` → godesktopdup (Windows only)
+- Deps: `gopkg.in/yaml.v3`, `github.com/shinkar94/godesktopdup`
 
 ## Git workflow for agents
 
