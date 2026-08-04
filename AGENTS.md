@@ -74,7 +74,7 @@ go test ./...
 - [x] Phase E — Windows mouse / keyboard / gamepad (rumble) + portable `executor/mux`
 - [x] Phase F — `cmd/demo` (Linux: fake/dxgihttp; Windows: dxgi + optional real executor)
 - [x] Linux L1 — `capture/x11` (XGetImage / jezek/xgb; no CGO)
-- [ ] Linux L2 — XTest mouse/keyboard
+- [x] Linux L2 — XTest mouse/keyboard (`mouse_linux.go`, `keyboard_linux.go`; US/QWERTY keycodes)
 - [ ] Linux L3 — demo + docs for X11 path
 
 ## Phase notes
@@ -83,8 +83,9 @@ go test ./...
 - Runtime tick: Capture → Recognizers → World.Apply → Root.Tick
 - OCR: inject `ocr.Engine`; LLM vision: HTTP JSON; Template: SAD
 - Capture: Windows `dxgi`; Linux `x11` (X11/XWayland root); portable `dxgihttp` / `fake`
-- Executors: Windows mouse/keyboard/gamepad; Linux mouse/keyboard via XTest (L2); `mux` + `fake` everywhere
+- Executors: Windows mouse/keyboard/gamepad; Linux mouse/keyboard via XTest (needs XTEST extension + `$DISPLAY`); `mux` + `fake` everywhere
 - Gamepad MVP: XInput rumble only (`control=vibrate`); no Linux gamepad
+- Linux keycodes are layout-approximate (pc105/US); no real input injection in default CI tests
 - `capture/x11`: ponytail GetImage socket copy; upgrade = MIT-SHM
 - Demo: `go run ./cmd/demo -capture=fake -duration=1s` (headless); `-capture=x11` on Linux with DISPLAY
 - Deps: `gopkg.in/yaml.v3`, `github.com/shinkar94/godesktopdup`, `golang.org/x/sys`, `github.com/jezek/xgb`
