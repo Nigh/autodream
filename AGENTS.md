@@ -53,11 +53,12 @@ Assembly only in `cmd/demo`. No cycles. Concrete impls in subpackages.
 |---------|-------------|------------|
 | frame, action, log, world, config, pipeline, runtime | yes | yes |
 | capture + fake, capture/dxgihttp | yes | yes (httptest for HTTP) |
+| capture/x11 | linux tag | skip if `$DISPLAY` unset; live GetImage when set |
 | capture/dxgi | windows tag only | skip on Linux |
 | recognition/* | yes | yes (synthetic frames) |
 | executor + fake | yes | yes |
-| executor/mouse, keyboard, gamepad | windows tag only | skip on Linux |
-| cmd/demo | yes | manual; default `-capture=fake` on non-Windows |
+| executor/mouse, keyboard, gamepad | windows (all three); linux mouse/keyboard via XTest (gamepad still windows-only) | no real input injection in CI |
+| cmd/demo | yes | manual; Linux prefers `x11` when DISPLAY set (see demo flags) |
 
 ```bash
 go test ./...
@@ -72,16 +73,21 @@ go test ./...
 - [x] Phase D — color / template / ocr (Engine inject) / llmvision (HTTP)
 - [x] Phase E — Windows mouse / keyboard / gamepad (rumble) + portable `executor/mux`
 - [x] Phase F — `cmd/demo` (Linux: fake/dxgihttp; Windows: dxgi + optional real executor)
+- [x] Linux L1 — `capture/x11` (XGetImage / jezek/xgb; no CGO)
+- [ ] Linux L2 — XTest mouse/keyboard
+- [ ] Linux L3 — demo + docs for X11 path
 
 ## Phase notes
 
 - `world.Update` is the mutation type; `recognition.Result` carries `[]world.Update`
 - Runtime tick: Capture → Recognizers → World.Apply → Root.Tick
 - OCR: inject `ocr.Engine`; LLM vision: HTTP JSON; Template: SAD
-- Executors: `mouse`/`keyboard`/`gamepad` are `//go:build windows`; Linux uses `fake` + `mux`
-- Gamepad MVP: XInput rumble only (`control=vibrate`)
-- Demo: `go run ./cmd/demo -capture=fake -duration=1s`
-- Deps: `gopkg.in/yaml.v3`, `github.com/shinkar94/godesktopdup`, `golang.org/x/sys`
+- Capture: Windows `dxgi`; Linux `x11` (X11/XWayland root); portable `dxgihttp` / `fake`
+- Executors: Windows mouse/keyboard/gamepad; Linux mouse/keyboard via XTest (L2); `mux` + `fake` everywhere
+- Gamepad MVP: XInput rumble only (`control=vibrate`); no Linux gamepad
+- `capture/x11`: ponytail GetImage socket copy; upgrade = MIT-SHM
+- Demo: `go run ./cmd/demo -capture=fake -duration=1s` (headless); `-capture=x11` on Linux with DISPLAY
+- Deps: `gopkg.in/yaml.v3`, `github.com/shinkar94/godesktopdup`, `golang.org/x/sys`, `github.com/jezek/xgb`
 
 ## Git workflow for agents
 
