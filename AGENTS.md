@@ -28,6 +28,8 @@ Automation framework (not a game-specific script). Agents and humans keep this f
 Capture → Frame → Recognizer(s) → World.Apply → Pipeline.Tick → Executor
 ```
 
+**How to build a reliable app workflow:** [docs/workflow.md](docs/workflow.md) (humans + agents).
+
 | Module | May | Must not |
 |--------|-----|----------|
 | capture | Produce Frame | Recognize / execute |
@@ -95,3 +97,4 @@ go test ./...
 - Interfaces only across module boundaries; replaceable impls
 - Do not regenerate the whole project in one dump — phase PRs
 - Sync AGENTS.md on every functional PR
+- When teaching or implementing app workflows, follow [docs/workflow.md](docs/workflow.md)
