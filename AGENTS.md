@@ -58,7 +58,7 @@ Assembly only in `cmd/demo`. No cycles. Concrete impls in subpackages.
 | recognition/* | yes | yes (synthetic frames) |
 | executor + fake | yes | yes |
 | executor/mouse, keyboard, gamepad | windows (all three); linux mouse/keyboard via XTest (gamepad still windows-only) | no real input injection in CI |
-| cmd/demo | yes | manual; Linux prefers `x11` when DISPLAY set (see demo flags) |
+| cmd/demo | yes | manual; default `-capture=x11` when `$DISPLAY` set, else `fake` |
 
 ```bash
 go test ./...
@@ -75,7 +75,7 @@ go test ./...
 - [x] Phase F — `cmd/demo` (Linux: fake/dxgihttp; Windows: dxgi + optional real executor)
 - [x] Linux L1 — `capture/x11` (XGetImage / jezek/xgb; no CGO)
 - [x] Linux L2 — XTest mouse/keyboard (`mouse_linux.go`, `keyboard_linux.go`; US/QWERTY keycodes)
-- [ ] Linux L3 — demo + docs for X11 path
+- [x] Linux L3 — demo (`-capture=x11`, `-real-executor`) + workflow/README/AGENTS
 
 ## Phase notes
 
@@ -87,7 +87,7 @@ go test ./...
 - Gamepad MVP: XInput rumble only (`control=vibrate`); no Linux gamepad
 - Linux keycodes are layout-approximate (pc105/US); no real input injection in default CI tests
 - `capture/x11`: ponytail GetImage socket copy; upgrade = MIT-SHM
-- Demo: `go run ./cmd/demo -capture=fake -duration=1s` (headless); `-capture=x11` on Linux with DISPLAY
+- Demo: `go run ./cmd/demo -capture=fake -duration=1s` (headless); `go run ./cmd/demo -capture=x11 -duration=1s` (Linux DISPLAY)
 - Deps: `gopkg.in/yaml.v3`, `github.com/shinkar94/godesktopdup`, `golang.org/x/sys`, `github.com/jezek/xgb`
 
 ## Git workflow for agents
