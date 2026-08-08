@@ -25,11 +25,13 @@ type Config struct {
 }
 
 // Recognizer finds the best SAD-based match of a template inside ROI.
+// Transparent template pixels (alpha == 0) are skipped in the SAD score.
 type Recognizer struct {
-	cfg    Config
-	tmplW  int
-	tmplH  int
-	tmpl   []byte // BGRA
+	cfg     Config
+	tmplW   int
+	tmplH   int
+	tmpl    []byte // BGRA
+	opaqueN int    // non-transparent pixels; score denom
 }
 
 // New loads the template image from cfg.Image.
@@ -59,7 +61,7 @@ func New(cfg Config) (*Recognizer, error) {
 		return nil, fmt.Errorf("template: decode: %w", err)
 	}
 	w, h, data := imgutil.ImageToBGRA(img)
-	return &Recognizer{cfg: cfg, tmplW: w, tmplH: h, tmpl: data}, nil
+	return newRecognizer(cfg, w, h, data)
 }
 
 // NewFromBGRA is useful in tests without touching disk.
@@ -81,7 +83,25 @@ func NewFromBGRA(cfg Config, w, h int, bgra []byte) (*Recognizer, error) {
 	}
 	cp := make([]byte, w*h*4)
 	copy(cp, bgra)
-	return &Recognizer{cfg: cfg, tmplW: w, tmplH: h, tmpl: cp}, nil
+	return newRecognizer(cfg, w, h, cp)
+}
+
+func newRecognizer(cfg Config, w, h int, bgra []byte) (*Recognizer, error) {
+	n := countOpaque(bgra)
+	if n == 0 {
+		return nil, fmt.Errorf("template: no opaque pixels")
+	}
+	return &Recognizer{cfg: cfg, tmplW: w, tmplH: h, tmpl: bgra, opaqueN: n}, nil
+}
+
+func countOpaque(bgra []byte) int {
+	n := 0
+	for i := 3; i < len(bgra); i += 4 {
+		if bgra[i] != 0 {
+			n++
+		}
+	}
+	return n
 }
 
 func (r *Recognizer) Name() string { return r.cfg.Name }
@@ -103,7 +123,7 @@ func (r *Recognizer) Recognize(ctx context.Context, f *frame.Frame) (recognition
 
 	best := 0.0
 	bestX, bestY := 0, 0
-	maxDiff := float64(r.tmplW * r.tmplH * 3 * 255)
+	maxDiff := float64(r.opaqueN * 3 * 255)
 	for y := 0; y <= v.ROI.H-r.tmplH; y++ {
 		for x := 0; x <= v.ROI.W-r.tmplW; x++ {
 			if err := ctx.Err(); err != nil {
@@ -113,11 +133,13 @@ func (r *Recognizer) Recognize(ctx context.Context, f *frame.Frame) (recognition
 			ti := 0
 			for ty := 0; ty < r.tmplH; ty++ {
 				for tx := 0; tx < r.tmplW; tx++ {
-					px, err := v.At(x+tx, y+ty)
-					if err != nil {
-						return recognition.Result{}, err
+					if r.tmpl[ti+3] != 0 {
+						px, err := v.At(x+tx, y+ty)
+						if err != nil {
+							return recognition.Result{}, err
+						}
+						sad += absDiff(px[0], r.tmpl[ti]) + absDiff(px[1], r.tmpl[ti+1]) + absDiff(px[2], r.tmpl[ti+2])
 					}
-					sad += absDiff(px[0], r.tmpl[ti]) + absDiff(px[1], r.tmpl[ti+1]) + absDiff(px[2], r.tmpl[ti+2])
 					ti += 4
 				}
 			}

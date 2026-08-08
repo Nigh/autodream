@@ -43,3 +43,38 @@ func TestTemplateMatch(t *testing.T) {
 		t.Fatalf("pos %+v", res.Findings[0].Extra)
 	}
 }
+
+func TestTemplateSkipTransparent(t *testing.T) {
+	w, h := 4, 4
+	data := make([]byte, w*h*4)
+	for i := 0; i < len(data); i += 4 {
+		data[i] = 255 // blue background
+		data[i+3] = 255
+	}
+	// red pixel at (2,2)
+	i := (2*w + 2) * 4
+	data[i+0], data[i+1], data[i+2], data[i+3] = 0, 0, 255, 255
+
+	// 3x3: only center opaque red; other pixels black+transparent (would spoil SAD if counted)
+	tmpl := make([]byte, 3*3*4)
+	ci := (1*3 + 1) * 4
+	tmpl[ci+2], tmpl[ci+3] = 255, 255
+
+	rec, err := template.NewFromBGRA(template.Config{WorldKey: "hit", Threshold: 0.95}, 3, 3, tmpl)
+	if err != nil {
+		t.Fatal(err)
+	}
+	res, err := rec.Recognize(context.Background(), &frame.Frame{
+		FrameID: 1, Timestamp: time.Now().UTC(),
+		Width: w, Height: h, PixelFormat: frame.PixelFormatBGRA8, Data: data,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.Updates[0].Value != true {
+		t.Fatalf("want hit, got %+v", res)
+	}
+	if res.Findings[0].Extra["x"] != 1 || res.Findings[0].Extra["y"] != 1 {
+		t.Fatalf("pos %+v", res.Findings[0].Extra)
+	}
+}
