@@ -55,10 +55,13 @@ func TestTemplateSkipTransparent(t *testing.T) {
 	i := (2*w + 2) * 4
 	data[i+0], data[i+1], data[i+2], data[i+3] = 0, 0, 255, 255
 
-	// 3x3: only center opaque red; other pixels black+transparent (would spoil SAD if counted)
+	// 3x3: only center fully opaque red; neighbors black with alpha 0 / 128
+	// (would spoil SAD against blue if semi-transparent were counted)
 	tmpl := make([]byte, 3*3*4)
 	ci := (1*3 + 1) * 4
 	tmpl[ci+2], tmpl[ci+3] = 255, 255
+	si := (1*3 + 0) * 4
+	tmpl[si+3] = 128 // semi-transparent black
 
 	rec, err := template.NewFromBGRA(template.Config{WorldKey: "hit", Threshold: 0.95}, 3, 3, tmpl)
 	if err != nil {
