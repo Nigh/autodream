@@ -39,8 +39,10 @@ func (e *Executor) Execute(ctx context.Context, a action.Action) error {
 	switch a.Kind {
 	case action.KindKeyTap:
 		procKeybdEvent.Call(uintptr(vk), 0, 0, 0)
+		err := sleepTap(ctx)
 		procKeybdEvent.Call(uintptr(vk), 0, keyeventfKeyup, 0)
-		return nil
+		return err
+
 	case action.KindKey:
 		flag := uintptr(0)
 		if !a.Down {

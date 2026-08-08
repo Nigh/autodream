@@ -35,6 +35,9 @@ type Capture struct {
 	mu      sync.Mutex
 	dd      *dda.DesktopDuplication
 	current *frame.Frame
+	// ponytail: pix* = buffer size for GetFrameBGRA; logic* tracks last GetSize to detect DPI/mode change.
+	pixW, pixH     int
+	logicW, logicH int
 }
 
 // New creates a DXGI capture for the given output index.
@@ -87,6 +90,8 @@ func (c *Capture) Stop() error {
 		c.dd.Release()
 		c.dd = nil
 	}
+	c.pixW, c.pixH = 0, 0
+	c.logicW, c.logicH = 0, 0
 	return nil
 }
 
@@ -99,13 +104,22 @@ func (c *Capture) CurrentFrame() (*frame.Frame, error) {
 	if c.dd == nil {
 		return nil, capture.ErrNotStarted
 	}
-	w, h, err := c.dd.GetSize()
+	w, h, err := c.framePixels()
 	if err != nil {
-		return nil, fmt.Errorf("dxgi: size: %w", err)
+		return nil, err
 	}
-	f := c.pool.Acquire(w, h, frame.PixelFormatBGRA8)
-	if err := c.dd.GetFrameBGRA(f.Data, c.timeout); err != nil {
-		c.pool.Release(f)
+	f, err := c.grab(w, h)
+	if isBufferTooSmall(err) {
+		// GetSize was logical; GetFrameBGRA needs physical. Retry once.
+		if w2, h2, ok := c.physicalFromDPI(w, h); ok {
+			f, err = c.grab(w2, h2)
+			if err == nil {
+				w, h = w2, h2
+				c.pixW, c.pixH = w2, h2
+			}
+		}
+	}
+	if err != nil {
 		return nil, fmt.Errorf("dxgi: frame: %w", err)
 	}
 	old := c.current
@@ -114,5 +128,57 @@ func (c *Capture) CurrentFrame() (*frame.Frame, error) {
 		c.pool.Release(old)
 	}
 	c.log.Trace("dxgi frame", "id", f.FrameID, "w", w, "h", h)
+	return f, nil
+}
+
+func (c *Capture) framePixels() (int, int, error) {
+	w, h, err := c.dd.GetSize()
+	if err != nil {
+		return 0, 0, fmt.Errorf("dxgi: size: %w", err)
+	}
+	if validSize(w, h) {
+		if c.logicW != w || c.logicH != h {
+			// DPI / mode change: drop physical override; may bump again on buffer-too-small.
+			c.logicW, c.logicH = w, h
+			c.pixW, c.pixH = w, h
+		} else if !validSize(c.pixW, c.pixH) {
+			c.pixW, c.pixH = w, h
+		}
+		return c.pixW, c.pixH, nil
+	}
+	// GetSize can return 0 on first call or during DPI switch.
+	fbW, fbH := 0, 0
+	if fw, fh, ok := displaySize(c.cfg.OutputIndex); ok {
+		fbW, fbH = fw, fh
+	}
+	outW, outH, ok := pickSize(w, h, c.pixW, c.pixH, fbW, fbH)
+	if !ok {
+		return 0, 0, fmt.Errorf("dxgi: size unavailable (GetSize %dx%d)", w, h)
+	}
+	c.pixW, c.pixH = outW, outH
+	return outW, outH, nil
+}
+
+func (c *Capture) physicalFromDPI(logicalW, logicalH int) (int, int, bool) {
+	left, top, right, bottom, err := c.dd.GetBounds()
+	if err != nil {
+		return 0, 0, false
+	}
+	w, h := logicalToPhysical(logicalW, logicalH, monitorDPI(left, top, right, bottom))
+	if w == logicalW && h == logicalH {
+		return 0, 0, false
+	}
+	return w, h, true
+}
+
+func (c *Capture) grab(w, h int) (*frame.Frame, error) {
+	if !validSize(w, h) {
+		return nil, fmt.Errorf("invalid size %dx%d", w, h)
+	}
+	f := c.pool.Acquire(w, h, frame.PixelFormatBGRA8)
+	if err := c.dd.GetFrameBGRA(f.Data, c.timeout); err != nil {
+		c.pool.Release(f)
+		return nil, err
+	}
 	return f, nil
 }

@@ -72,7 +72,12 @@ func (e *Executor) Execute(ctx context.Context, a action.Action) error {
 		if err := e.key(code, true); err != nil {
 			return err
 		}
-		return e.key(code, false)
+		err := sleepTap(ctx)
+		if upErr := e.key(code, false); upErr != nil {
+			return upErr
+		}
+		return err
+
 	case action.KindKey:
 		return e.key(code, a.Down)
 	default:
