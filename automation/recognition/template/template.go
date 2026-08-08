@@ -25,13 +25,14 @@ type Config struct {
 }
 
 // Recognizer finds the best SAD-based match of a template inside ROI.
-// Transparent template pixels (alpha == 0) are skipped in the SAD score.
+// Only fully opaque template pixels (alpha == 255) enter the SAD score;
+// transparent and semi-transparent pixels are skipped.
 type Recognizer struct {
 	cfg     Config
 	tmplW   int
 	tmplH   int
 	tmpl    []byte // BGRA
-	opaqueN int    // non-transparent pixels; score denom
+	opaqueN int    // alpha==255 pixels; score denom
 }
 
 // New loads the template image from cfg.Image.
@@ -97,7 +98,7 @@ func newRecognizer(cfg Config, w, h int, bgra []byte) (*Recognizer, error) {
 func countOpaque(bgra []byte) int {
 	n := 0
 	for i := 3; i < len(bgra); i += 4 {
-		if bgra[i] != 0 {
+		if bgra[i] == 255 {
 			n++
 		}
 	}
@@ -133,7 +134,7 @@ func (r *Recognizer) Recognize(ctx context.Context, f *frame.Frame) (recognition
 			ti := 0
 			for ty := 0; ty < r.tmplH; ty++ {
 				for tx := 0; tx < r.tmplW; tx++ {
-					if r.tmpl[ti+3] != 0 {
+					if r.tmpl[ti+3] == 255 {
 						px, err := v.At(x+tx, y+ty)
 						if err != nil {
 							return recognition.Result{}, err
