@@ -81,7 +81,7 @@ go test ./...
 
 - `world.Update` is the mutation type; `recognition.Result` carries `[]world.Update`
 - Runtime tick: Capture → Recognizers → World.Apply → Root.Tick
-- OCR: inject `ocr.Engine`; LLM vision: HTTP JSON; Template: SAD
+- OCR: inject `ocr.Engine`; LLM vision: HTTP JSON; Template: SAD (skip alpha==0)
 - Capture: Windows `dxgi`; Linux `x11` (X11/XWayland root); portable `dxgihttp` / `fake`
 - Executors: Windows mouse/keyboard/gamepad; Linux mouse/keyboard via XTest (needs XTEST extension + `$DISPLAY`); `mux` + `fake` everywhere
 - Gamepad MVP: XInput rumble only (`control=vibrate`); no Linux gamepad
